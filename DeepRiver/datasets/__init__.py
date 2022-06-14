@@ -4,9 +4,6 @@ from .shuttle import Shuttle
 
 __all__ = [
     "Covertype",
-    "CreditCard",
-    "HTTP",
     "MNIST",
     "Shuttle",
-    "SMTP",
 ]

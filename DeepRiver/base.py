@@ -8,7 +8,7 @@ import torch
 from river import base, anomaly, stats
 from torch import nn
 
-from DeepRiver.utils import get_loss_fn, get_optimizer_fn, dict2tensor
+from DeepRiver.utils import get_loss_fn, get_optimizer_fn, dict2tensor, SequentialLSTM
 
 
 class DeepEstimator(base.Estimator):
@@ -154,18 +154,21 @@ class RollingDeepEstimator(base.Estimator):
 
     @classmethod
     def _unit_test_params(cls):
-        def build_torch_linear_regressor(n_features):
-            net = torch.nn.Sequential(
-                torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
+        def build_torch_lstm_regressor(n_features, hidden_size):
+            net = nn.Sequential(
+                SequentialLSTM(input_size=n_features, hidden_size=hidden_size, num_layers=1),
+                nn.Linear(hidden_size, 10),
+                nn.Linear(10, 1)
             )
             return net
 
         yield {
             "loss_fn": "mse",
-            "build_fn": build_torch_linear_regressor,
+            "build_fn": build_torch_lstm_regressor,
             "optimizer_fn": torch.optim.SGD,
+            "hidden_size": 1,
+            "window_size" : 2,
         }
-
     @classmethod
     def _unit_test_skips(self):
         """Indicates which checks to skip during unit testing.
