@@ -81,15 +81,13 @@ print(f'Accuracy: {metric.get()}')
 import math
 
 from river import datasets, metrics
-from DeepRiver.anomaly.nn_builder import get_fc_autoencoder
 from DeepRiver.base import AutoencodedAnomalyDetector
 from DeepRiver.utils import get_activation_fn
 from torch import manual_seed, nn
 
 _ = manual_seed(0)
 
-
-def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
+def get_fully_connected_encoder(activation_fn="selu", dropout=0.5, n_features=3):
     activation = get_activation_fn(activation_fn)
 
     encoder = nn.Sequential(
@@ -99,20 +97,24 @@ def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features
         nn.Linear(in_features=math.ceil(n_features / 2), out_features=math.ceil(n_features / 4)),
         activation(),
     )
+    return encoder
+
+def get_fully_connected_decoder(activation_fn="selu", dropout=0.5, n_features=3):
+    activation = get_activation_fn(activation_fn)
+
     decoder = nn.Sequential(
         nn.Linear(in_features=math.ceil(n_features / 4), out_features=math.ceil(n_features / 2)),
         activation(),
         nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
     )
-    return encoder, decoder
-
+    return decoder
 
 if __name__ == '__main__':
 
     dataset = datasets.CreditCard().take(5000)
     metric = metrics.ROCAUC()
 
-    model = AutoencodedAnomalyDetector(build_fn=get_fully_conected_autoencoder, lr=0.01)
+    model = AutoencodedAnomalyDetector(encoder_fn=get_fully_connected_encoder, decoder_fn=get_fully_connected_decoder, lr=0.01)
 
     for x, y in dataset:
         score = model.score_one(x)
